@@ -19,6 +19,9 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8001',
     'http://localhost:8001',
+
+    # Railway production
+    'https://votex-production-4825.up.railway.app',
 ]
 
 # Keep session alive even after browser close during development
