@@ -100,6 +100,12 @@ class PasswordResetOTP(models.Model):
 
 class SignupOTP(models.Model):
     email = models.EmailField()
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150, blank=True)
+    student_id = models.CharField(max_length=20)
+    department = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=15, blank=True)
+    password_hash = models.CharField(max_length=128)
     otp = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
