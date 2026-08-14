@@ -12,7 +12,10 @@ from django.contrib.auth.decorators import login_required
 
 import random
 from .models import CustomUser, PasswordResetOTP
-from .utils import send_password_reset_otp_email
+from .utils import (
+    send_password_reset_otp_email,
+    send_signup_otp_email,
+)
 
 
 @require_http_methods(["GET", "POST"])
@@ -169,3 +172,275 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('home')
+
+from django.contrib.auth.hashers import make_password
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.db import IntegrityError
+
+from .models import SignupOTP
+from .utils import send_signup_otp_email
+
+
+COLLEGE_EMAIL_DOMAIN = getattr(
+    settings,
+    'COLLEGE_EMAIL_DOMAIN',
+    'rajalakshmi.edu.in'
+).lower().lstrip('@')
+
+
+def _valid_college_email(email):
+    """Return True only for an email belonging to the configured college domain."""
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False
+
+    return email.lower().endswith('@' + COLLEGE_EMAIL_DOMAIN)
+
+
+@require_http_methods(["GET", "POST"])
+def signup(request):
+    """Step 1: collect student details and send a college-email OTP."""
+
+    if request.user.is_authenticated:
+        return redirect('accounts:redirect')
+
+    if request.method == 'POST':
+
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        student_id = request.POST.get('student_id', '').strip()
+        department = request.POST.get('department', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+
+        # Required fields
+        if not first_name or not email or not student_id or not password:
+            messages.error(
+                request,
+                'Please fill in all required fields.'
+            )
+
+        # College email validation
+        elif not _valid_college_email(email):
+            messages.error(
+                request,
+                f'Please use your college email ending with '
+                f'@{COLLEGE_EMAIL_DOMAIN}.'
+            )
+
+        # Password validation
+        elif password != confirm_password:
+            messages.error(
+                request,
+                'Passwords do not match.'
+            )
+
+        elif len(password) < 8:
+            messages.error(
+                request,
+                'Password must be at least 8 characters long.'
+            )
+
+        # Duplicate email
+        elif CustomUser.objects.filter(
+            email__iexact=email
+        ).exists():
+            messages.error(
+                request,
+                'An account with this email already exists. Please log in instead.'
+            )
+
+        # Duplicate student ID
+        elif CustomUser.objects.filter(
+            student_id__iexact=student_id
+        ).exists():
+            messages.error(
+                request,
+                'This student ID is already registered.'
+            )
+
+        else:
+            # Generate OTP
+            otp = str(random.randint(100000, 999999))
+
+            # Remove previous unfinished signup
+            SignupOTP.objects.filter(
+                email__iexact=email,
+                is_verified=False
+            ).delete()
+
+            # Store only hashed password
+            signup_record = SignupOTP.objects.create(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                student_id=student_id,
+                department=department,
+                phone=phone,
+                password_hash=make_password(password),
+                otp=otp,
+            )
+
+            try:
+                send_signup_otp_email(email, otp)
+
+                request.session['signup_email'] = email
+
+                messages.success(
+                    request,
+                    f'Verification OTP sent to {email}.'
+                )
+
+                return redirect(
+                    'accounts:verify_signup_otp'
+                )
+
+            except Exception as exc:
+
+                signup_record.delete()
+
+                messages.error(
+                    request,
+                    'Unable to send verification email. '
+                    'Please try again.'
+                )
+
+    return render(
+        request,
+        'accounts/signup.html',
+        {
+            'college_domain': COLLEGE_EMAIL_DOMAIN,
+        }
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def verify_signup_otp(request):
+    """Step 2: verify college email OTP and create student account."""
+
+    email = request.session.get('signup_email')
+
+    if not email:
+        return redirect('accounts:signup')
+
+    if request.method == 'POST':
+
+        otp_code = request.POST.get('otp', '').strip()
+
+        record = SignupOTP.objects.filter(
+            email__iexact=email,
+            otp=otp_code,
+            is_verified=False,
+        ).first()
+
+        if not record or record.is_expired:
+
+            messages.error(
+                request,
+                'Invalid or expired OTP code.'
+            )
+
+        else:
+
+            # Check email again
+            if CustomUser.objects.filter(
+                email__iexact=record.email
+            ).exists():
+
+                messages.error(
+                    request,
+                    'An account with this email already exists. Please log in.'
+                )
+
+                record.delete()
+                request.session.pop('signup_email', None)
+
+                return redirect('accounts:login')
+
+            # Check student ID again
+            if CustomUser.objects.filter(
+                student_id__iexact=record.student_id
+            ).exists():
+
+                messages.error(
+                    request,
+                    'This student ID is already registered.'
+                )
+
+                record.delete()
+                request.session.pop('signup_email', None)
+
+                return redirect('accounts:login')
+
+            # Generate username
+            username = f"stu_{record.student_id.lower()}"
+
+            if CustomUser.objects.filter(
+                username__iexact=username
+            ).exists():
+
+                messages.error(
+                    request,
+                    'This student ID is already associated with an account.'
+                )
+
+                record.delete()
+                request.session.pop('signup_email', None)
+
+                return redirect('accounts:login')
+
+            try:
+
+                user = CustomUser.objects.create(
+                    username=username,
+                    email=record.email,
+                    first_name=record.first_name,
+                    last_name=record.last_name,
+                    role='student',
+                    student_id=record.student_id,
+                    department=record.department or None,
+                    phone=record.phone or None,
+
+                    # Password is already hashed
+                    password=record.password_hash,
+
+                    is_active=True,
+                )
+
+            except IntegrityError:
+
+                messages.error(
+                    request,
+                    'This student information is already registered.'
+                )
+
+                return redirect('accounts:signup')
+
+            # Mark verified and remove temporary record
+            record.is_verified = True
+            record.save(update_fields=['is_verified'])
+            record.delete()
+
+            request.session.pop('signup_email', None)
+
+            messages.success(
+                request,
+                f'Account created successfully. '
+                f'Your username is {user.username}. Please log in.'
+            )
+
+            return redirect('accounts:login')
+
+    return render(
+        request,
+        'accounts/verify_signup_otp.html',
+        {
+            'email': email
+        }
+    )

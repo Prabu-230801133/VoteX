@@ -382,3 +382,37 @@ College Election Committee
         recipient=user.email,
         fail_silently=False,
     )
+def send_signup_otp_email(email, otp):
+    """Send OTP for new student account verification."""
+
+    if not email:
+        return False
+
+    subject = "VoteX Student Account Verification OTP"
+
+    message = f"""
+Dear Student,
+
+You have requested to create a student account on the
+College Voting System (VoteX).
+
+Your verification OTP is:
+
+{otp}
+
+This code is valid for 10 minutes.
+
+Please do not share this OTP with anyone.
+
+If you did not request this account, please ignore this email.
+
+Best regards,
+College Election Committee
+""".strip()
+
+    return _send_email(
+        subject=subject,
+        message=message,
+        recipient=email,
+        fail_silently=False,
+    )
