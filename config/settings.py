@@ -241,3 +241,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ],
 }
+COLLEGE_EMAIL_DOMAIN = os.getenv(
+    "COLLEGE_EMAIL_DOMAIN",
+    "rajalakshmi.edu.in"
+)
