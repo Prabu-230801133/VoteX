@@ -90,17 +90,17 @@ class CustomUserAdmin(UserAdmin):
     """Enhanced UserAdmin with role and election management."""
 
     list_display = [
-        'username', 'email', 'get_full_name', 'role',
+        'username', 'email', 'google_email', 'get_full_name', 'role',
         'student_id', 'department', 'credentials_sent', 'is_active'
     ]
     list_filter = ['role', 'credentials_sent', 'is_active', 'department']
-    search_fields = ['username', 'email', 'first_name', 'last_name', 'student_id']
+    search_fields = ['username', 'email', 'google_email', 'first_name', 'last_name', 'student_id']
     actions = [send_credentials_action]
 
     # Add role, student info to the default UserAdmin fieldsets
     fieldsets = UserAdmin.fieldsets + (
         ('College Info', {
-            'fields': ('role', 'student_id', 'department', 'phone', 'profile_picture')
+            'fields': ('role', 'student_id', 'google_email', 'department', 'phone', 'profile_picture')
         }),
         ('System', {
             'fields': ('credentials_sent',)
@@ -109,7 +109,7 @@ class CustomUserAdmin(UserAdmin):
 
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('College Info', {
-            'fields': ('email', 'first_name', 'last_name', 'role', 'student_id', 'department', 'phone')
+            'fields': ('email', 'google_email', 'first_name', 'last_name', 'role', 'student_id', 'department', 'phone')
         }),
     )
 

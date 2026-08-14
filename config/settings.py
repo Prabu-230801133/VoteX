@@ -188,12 +188,14 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_uid',
     'social_core.pipeline.social_auth.auth_allowed',
     'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.user.get_username',
-    'accounts.pipeline.require_pre_registration',  # ← blocks unregistered Google accounts
+    'accounts.pipeline.require_pre_registration',
+    # Never auto-create a new voter from Google.
     'social_core.pipeline.user.create_user',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
+    # Intentionally omit get_username/user_details: Google must not rename
+    # VoteX usernames or overwrite the user's normal email/name fields.
+    'accounts.pipeline.set_google_email',
     'accounts.pipeline.set_student_role',
 )
 
@@ -222,9 +224,6 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='College Voting <norep
 BREVO_API_KEY = config('BREVO_API_KEY', default='')
 BREVO_SENDER_EMAIL = config('BREVO_SENDER_EMAIL', default='')
 BREVO_SENDER_NAME = config('BREVO_SENDER_NAME', default='VoteX')
-
-# Public student registration is restricted to the college email domain.
-COLLEGE_EMAIL_DOMAIN = config('COLLEGE_EMAIL_DOMAIN', default='rajalakshmi.edu.in')
 # If no email configured, use console backend
 if not EMAIL_HOST_USER:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

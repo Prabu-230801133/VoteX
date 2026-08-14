@@ -25,6 +25,14 @@ class CustomUser(AbstractUser):
         help_text='User role determines access level'
     )
 
+    # Google OAuth identity (kept separate from notification/personal email)
+    google_email = models.EmailField(
+        blank=True,
+        null=True,
+        unique=True,
+        help_text='College Google account used for Google OAuth login'
+    )
+
     # Student-specific fields
     student_id = models.CharField(
         max_length=20,
@@ -87,29 +95,3 @@ class PasswordResetOTP(models.Model):
         from datetime import timedelta
         from django.utils import timezone
         return timezone.now() > self.created_at + timedelta(minutes=10)
-
-class SignupOTP(models.Model):
-    """Temporary registration record used to verify a college email before account creation."""
-    email = models.EmailField()
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150, blank=True)
-    student_id = models.CharField(max_length=20)
-    department = models.CharField(max_length=100, blank=True)
-    phone = models.CharField(max_length=15, blank=True)
-    password_hash = models.CharField(max_length=128)
-    otp = models.CharField(max_length=6)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_verified = models.BooleanField(default=False)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"Signup OTP for {self.email} at {self.created_at}"
-
-    @property
-    def is_expired(self):
-        from datetime import timedelta
-        from django.utils import timezone
-        return timezone.now() > self.created_at + timedelta(minutes=10)
-
