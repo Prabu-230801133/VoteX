@@ -233,6 +233,11 @@ body { overflow: hidden; }
         <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;" id="loginBtn">
           🔐 Sign In
         </button>
+
+        <p style="text-align:center;margin-top:1rem;font-size:0.88rem;color:var(--text-muted);">
+          Don't have an account?
+          <a href="{% url 'accounts:signup' %}" style="color:var(--text-secondary);font-weight:600;text-decoration:none;">Create a student account</a>
+        </p>
       </form>
 
       <div class="divider">or continue with</div>

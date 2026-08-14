@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up — VoteX{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-page { min-height: calc(100vh - 80px); display:flex; align-items:center; justify-content:center; padding:3rem 1rem; }
+.auth-card { width:100%; max-width:760px; background:var(--bg-card); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:2.5rem; box-shadow:0 24px 70px rgba(0,0,0,.22); }
+.auth-card h1 { margin:0 0 .5rem; }
+.auth-subtitle { color:var(--text-secondary); margin-bottom:2rem; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-grid .full { grid-column:1 / -1; }
+.domain-note { margin-top:.45rem; font-size:.78rem; color:var(--text-muted); }
+@media(max-width:650px){ .form-grid{grid-template-columns:1fr;} .form-grid .full{grid-column:auto;} .auth-card{padding:1.5rem;} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div class="text-gradient" style="font-size:2.4rem;font-weight:900;font-family:'Outfit',sans-serif;">VoteX</div>
+      <h1>Create your <span class="text-gradient">student account</span></h1>
+      <p class="auth-subtitle">Verify your college email to join the voting system.</p>
+    </div>
+
+    <form method="post" id="signupForm">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="first_name">First Name *</label>
+          <input class="form-control" id="first_name" name="first_name" required value="{{ request.POST.first_name|default:'' }}" autocomplete="given-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="last_name">Last Name</label>
+          <input class="form-control" id="last_name" name="last_name" value="{{ request.POST.last_name|default:'' }}" autocomplete="family-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="student_id">Student ID *</label>
+          <input class="form-control" id="student_id" name="student_id" required value="{{ request.POST.student_id|default:'' }}" placeholder="e.g. 230801133">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="department">Department</label>
+          <input class="form-control" id="department" name="department" value="{{ request.POST.department|default:'' }}" placeholder="e.g. ECE">
+        </div>
+        <div class="form-group full">
+          <label class="form-label" for="email">College Email *</label>
+          <input class="form-control" type="email" id="email" name="email" required value="{{ request.POST.email|default:'' }}" placeholder="yourname@{{ college_domain }}" autocomplete="email">
+          <div class="domain-note">Only <strong>@{{ college_domain }}</strong> email addresses can register.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone</label>
+          <input class="form-control" type="tel" id="phone" name="phone" value="{{ request.POST.phone|default:'' }}" autocomplete="tel">
+        </div>
+        <div></div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password *</label>
+          <input class="form-control" type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password *</label>
+          <input class="form-control" type="password" id="confirm_password" name="confirm_password" required minlength="8" autocomplete="new-password">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:1rem;" id="signupBtn">
+        📧 Send Verification OTP
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:1.5rem;color:var(--text-muted);font-size:.88rem;">
+      Already have an account? <a href="{% url 'accounts:login' %}" style="color:var(--text-secondary);font-weight:600;text-decoration:none;">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('signupForm').addEventListener('submit', function(){
+  const btn = document.getElementById('signupBtn');
+  btn.textContent = '⏳ Sending OTP...';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

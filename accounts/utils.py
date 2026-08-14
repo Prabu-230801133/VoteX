@@ -382,3 +382,29 @@ College Election Committee
         recipient=user.email,
         fail_silently=False,
     )
+
+def send_signup_otp_email(email, otp):
+    """Send the email verification OTP for student self-registration."""
+    subject = "VoteX Sign Up Verification OTP"
+    message = f"""
+Hello,
+
+Your VoteX sign-up verification code is:
+
+{otp}
+
+This code is valid for 10 minutes.
+
+If you did not request a VoteX account, you can safely ignore this email.
+
+Best regards,
+VoteX — College Voting System
+""".strip()
+
+    return _send_email(
+        subject=subject,
+        message=message,
+        recipient=email,
+        fail_silently=False,
+    )
+

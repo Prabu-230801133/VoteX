@@ -222,6 +222,9 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='College Voting <norep
 BREVO_API_KEY = config('BREVO_API_KEY', default='')
 BREVO_SENDER_EMAIL = config('BREVO_SENDER_EMAIL', default='')
 BREVO_SENDER_NAME = config('BREVO_SENDER_NAME', default='VoteX')
+
+# Public student registration is restricted to the college email domain.
+COLLEGE_EMAIL_DOMAIN = config('COLLEGE_EMAIL_DOMAIN', default='rajalakshmi.edu.in')
 # If no email configured, use console backend
 if not EMAIL_HOST_USER:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Email — VoteX{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-page { min-height: calc(100vh - 80px); display:flex; align-items:center; justify-content:center; padding:3rem 1rem; }
+.auth-card { width:100%; max-width:480px; background:var(--bg-card); border:1px solid var(--glass-border); border-radius:var(--radius-lg); padding:2.5rem; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,.22); }
+.otp-input { text-align:center; font-size:1.6rem; letter-spacing:.45rem; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
+    <h1>Verify your <span class="text-gradient">email</span></h1>
+    <p style="color:var(--text-secondary);line-height:1.6;">
+      We sent a 6-digit verification code to<br>
+      <strong style="color:var(--text-primary);">{{ email }}</strong>
+    </p>
+
+    <form method="post" style="margin-top:2rem;">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label" for="otp">Verification Code</label>
+        <input class="form-control otp-input" type="text" id="otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="one-time-code" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:.75rem;">
+        ✓ Verify & Create Account
+      </button>
+    </form>
+
+    <p style="margin-top:1.5rem;color:var(--text-muted);font-size:.8rem;">
+      The code expires in 10 minutes.
+    </p>
+    <a href="{% url 'accounts:signup' %}" style="color:var(--text-secondary);font-size:.85rem;text-decoration:none;">← Start over</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
