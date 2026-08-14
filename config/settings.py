@@ -1,6 +1,7 @@
 """
 Django settings for College Voting System.
 """
+import os
 
 from pathlib import Path
 from decouple import config
