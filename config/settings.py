@@ -13,6 +13,13 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-college-voting-placeh
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ['*']
 
+# Railway is an HTTPS reverse proxy.
+# Railway terminates HTTPS and forwards the request to Django internally.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Tell python-social-auth to use HTTPS for OAuth redirect URLs.
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+
 # Allow CSRF from localhost in development (Django 4+ requires explicit trusted origins)
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
