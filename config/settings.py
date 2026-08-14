@@ -224,7 +224,8 @@ if not EMAIL_HOST_USER:
 
 # Groq AI Chatbot (groq.com) — free, ultra-fast LLM inference
 GROQ_API_KEY = config('GROQ_API_KEY', default='')
-
+# Resend Email API
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

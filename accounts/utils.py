@@ -1,17 +1,57 @@
 """
 accounts/utils.py
 Email utility functions for the voting system.
+
+Uses the Resend API directly instead of SMTP.
 """
-from django.core.mail import send_mail
+
+import html
+
+import resend
 from django.conf import settings
+
+
+def _send_email(subject, message, recipient, fail_silently=False):
+    """
+    Send an email through the Resend API.
+
+    Returns True on success.
+
+    If fail_silently=True, errors are swallowed and False is returned.
+    If fail_silently=False, the exception is re-raised.
+    """
+    if not recipient:
+        return False
+
+    try:
+        resend.api_key = settings.RESEND_API_KEY
+
+        # Convert the existing plain-text message into simple HTML.
+        html_message = html.escape(message).replace("\n", "<br>")
+
+        response = resend.Emails.send({
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [recipient],
+            "subject": subject,
+            "text": message,
+            "html": html_message,
+        })
+
+        return bool(response)
+
+    except Exception:
+        if fail_silently:
+            return False
+        raise
 
 
 def send_credentials_email(user, plain_password):
     """
     Send login credentials to a newly created student.
-    Called from Django admin action after generating username/password.
+    Called from Django admin after generating username/password.
     """
     subject = "Your College Voting System Login Credentials"
+
     message = f"""
 Dear {user.get_full_name() or user.username},
 
@@ -22,7 +62,7 @@ Login Details:
 Username : {user.username}
 Password : {plain_password}
 
-Login at: http://localhost:8000/accounts/login/
+Login at: https://votex-production-4825.up.railway.app/accounts/login/
 
 Please change your password after first login.
 
@@ -32,11 +72,10 @@ Best regards,
 College Election Committee
     """.strip()
 
-    send_mail(
+    return _send_email(
         subject=subject,
         message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
+        recipient=user.email,
         fail_silently=False,
     )
 
@@ -44,9 +83,9 @@ College Election Committee
 def send_vote_confirmation_email(user, election):
     """
     Send confirmation email after a student successfully votes.
-    Called from voting/views.py after a vote is recorded.
     """
     subject = f"Vote Confirmation - {election.name}"
+
     message = f"""
 Dear {user.get_full_name() or user.username},
 
@@ -59,17 +98,17 @@ Voted at : {election.start_time.strftime('%d %B %Y')}
 
 Your vote has been recorded securely. Thank you for participating!
 
-Results will be published after the election ends on {election.end_time.strftime('%d %B %Y, %I:%M %p')}.
+Results will be published after the election ends on
+{election.end_time.strftime('%d %B %Y, %I:%M %p')}.
 
 Best regards,
 College Election Committee
     """.strip()
 
-    send_mail(
+    return _send_email(
         subject=subject,
         message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
+        recipient=user.email,
         fail_silently=True,
     )
 
@@ -77,12 +116,13 @@ College Election Committee
 def send_election_scheduled_email(users, election):
     """
     Send notification to all assigned students when an election is scheduled.
-    users: queryset or list of CustomUser objects.
     """
     subject = f"Election Announcement: {election.name}"
+
     for user in users:
         if not user.email:
             continue
+
         message = f"""
 Dear {user.get_full_name() or user.username},
 
@@ -101,33 +141,36 @@ Username : {user.username}
 Password : [Your registered password]
 
 If you have forgotten your password, please use the "Forgot Password" link on the login page:
-Login: http://localhost:8000/accounts/login/
+
+Login: https://votex-production-4825.up.railway.app/accounts/login/
 
 Best regards,
 College Election Committee
         """.strip()
 
-        send_mail(
+        _send_email(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+            recipient=user.email,
             fail_silently=True,
         )
 
 
 def send_voting_reminder_email(users, election):
     """
-    Send a gentle reminder email to voters 2 hours before voting opens.
+    Send a reminder email to voters before voting opens.
     """
     subject = f"Reminder: Voting Opens Soon - {election.name}"
+
     for user in users:
         if not user.email:
             continue
+
         message = f"""
 Dear {user.get_full_name() or user.username},
 
-This is a gentle reminder that voting for "{election.name}" opens in less than 2 hours!
+This is a gentle reminder that voting for "{election.name}"
+opens in less than 2 hours!
 
 Election Details:
 -----------------
@@ -135,18 +178,20 @@ Election  : {election.name}
 Opens at  : {election.start_time.strftime('%d %B %Y, %I:%M %p')}
 Closes at : {election.end_time.strftime('%d %B %Y, %I:%M %p')}
 
-Please make sure to cast your vote on time. Every vote counts!
-Login: http://localhost:8000/accounts/login/
+Please make sure to cast your vote on time.
+Every vote counts!
+
+Login:
+https://votex-production-4825.up.railway.app/accounts/login/
 
 Best regards,
 College Election Committee
         """.strip()
 
-        send_mail(
+        _send_email(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+            recipient=user.email,
             fail_silently=True,
         )
 
@@ -157,8 +202,9 @@ def send_vote_otp_email(user, election, otp):
     """
     if not user.email:
         return False
-        
+
     subject = f"Vote Verification OTP - {election.name}"
+
     message = f"""
 Dear {user.get_full_name() or user.username},
 
@@ -166,23 +212,19 @@ You are attempting to cast your vote in "{election.name}".
 
 Your OTP code is: {otp}
 
-Please enter this code to verify and submit your vote. Do not share this code with anyone.
+Please enter this code to verify and submit your vote.
+Do not share this code with anyone.
 
 Best regards,
 College Election Committee
     """.strip()
 
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        return True
-    except Exception:
-        return False
+    return _send_email(
+        subject=subject,
+        message=message,
+        recipient=user.email,
+        fail_silently=False,
+    )
 
 
 def send_results_published_email(users, election):
@@ -190,27 +232,30 @@ def send_results_published_email(users, election):
     Send an email notifying students that election results have been published.
     """
     subject = f"Results Published: {election.name}"
+
     for user in users:
         if not user.email:
             continue
+
         message = f"""
 Dear {user.get_full_name() or user.username},
 
 The results for "{election.name}" have just been made public!
 
-You can now log in to the portal and view the detailed outcome of the election, including candidate vote counts and percentages.
+You can now log in to the portal and view the detailed outcome
+of the election, including candidate vote counts and percentages.
 
-View Results: http://localhost:8000/voting/results/{election.id}/
+View Results:
+https://votex-production-4825.up.railway.app/voting/results/{election.id}/
 
 Best regards,
 College Election Committee
         """.strip()
 
-        send_mail(
+        _send_email(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+            recipient=user.email,
             fail_silently=True,
         )
 
@@ -221,8 +266,9 @@ def send_password_reset_otp_email(user, otp):
     """
     if not user.email:
         return False
-        
+
     subject = "Password Reset Request - VoteX"
+
     message = f"""
 Dear {user.get_full_name() or user.username},
 
@@ -230,20 +276,18 @@ You have requested to reset your password for the College Voting System (VoteX).
 
 Your Password Reset OTP is: {otp}
 
-This code is valid for 10 minutes. If you did not request this, please ignore this email and ensure your account is secure.
+This code is valid for 10 minutes.
+
+If you did not request this, please ignore this email
+and ensure your account is secure.
 
 Best regards,
 College Election Committee
     """.strip()
 
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        return True
-    except Exception:
-        return False
+    return _send_email(
+        subject=subject,
+        message=message,
+        recipient=user.email,
+        fail_silently=False,
+    )
