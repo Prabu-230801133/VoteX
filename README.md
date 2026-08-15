@@ -1,159 +1,497 @@
-# 🗳️ VoteX — College Voting System
+````markdown
+# VoteX — College Online Voting System
 
-A full-stack secure college voting system built with **Django + MySQL + HTML/CSS/JS**.
+VoteX is a full-stack college voting platform designed to digitize and streamline the college election process.
+
+The system provides secure student registration, email verification, Google authentication, election management, OTP-verified voting, automated email notifications, AI-powered assistance, and result publication.
+
+## Live Application
+
+https://votex-production-4825.up.railway.app/
 
 ---
 
-## 🛠️ Tech Stack
+## Features
+
+### Student Registration
+
+- Registration using an official college email address
+- College email domain validation
+- Email OTP verification
+- Secure password hashing
+- Automatic student account creation
+
+### Authentication
+
+- Username and password authentication
+- Google OAuth 2.0 authentication
+- College Google account association
+- Password reset using email OTP
+- Role-based authentication
+- Separate student and administrator access
+
+### Election Management
+
+Administrators can:
+
+- Create and manage elections
+- Configure election start and end times
+- Add and manage candidates
+- Assign students to elections
+- Monitor election status
+- Publish election results
+
+### Secure Voting
+
+- Students can vote only in eligible elections
+- OTP verification before vote submission
+- One vote per student per position
+- Database-level duplicate vote prevention
+- Vote confirmation through email
+- Results available after the election ends
+
+### Email Notifications
+
+VoteX uses the **Brevo Transactional Email API** for application emails.
+
+The system can send:
+
+- Student signup OTP
+- Login credentials
+- Vote verification OTP
+- Vote confirmation
+- Password reset OTP
+- Election announcements
+- Voting reminders
+- Results publication notifications
+
+### AI-Powered Voting Assistant
+
+VoteX includes an AI-powered chatbot that provides students with interactive assistance while using the platform.
+
+The chatbot can help users with:
+
+- Understanding the voting process
+- Registration and email verification
+- OTP-related guidance
+- Election-related questions
+- Navigating the platform
+- General VoteX-related queries
+
+---
+
+## Technology Stack
 
 | Component | Technology |
-|-----------|-----------|
-| Backend | Django 4.2 (Python 3.12) |
-| Database | MySQL 8.0 |
-| Frontend | HTML5, CSS3, Vanilla JavaScript |
-| Auth | Django Auth + Google OAuth 2.0 |
-| Email | Gmail SMTP (Django backend) |
-| Images | Cloudinary API / Local media |
+|-----------|------------|
+| Backend | Python, Django |
+| Database | MySQL |
+| Frontend | HTML5, CSS3, JavaScript |
+| Authentication | Django Authentication |
+| Social Authentication | Google OAuth 2.0 |
+| Email | Brevo Transactional Email API |
+| AI Assistant | Groq API / LLM |
+| Image Storage | Cloudinary |
 | REST API | Django REST Framework |
+| Deployment | Railway |
+| Version Control | Git, GitHub |
 
 ---
 
-## 🚀 Quick Start
+## Architecture
 
-### Step 1: Configure Environment
+```text
+                    ┌─────────────────────┐
+                    │      Student        │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    VoteX Frontend   │
+                    │ HTML/CSS/JavaScript │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    Django Backend   │
+                    │ Authentication      │
+                    │ Voting Logic        │
+                    │ Election Management │
+                    └──────┬───────┬──────┘
+                           │       │
+              ┌────────────┘       └──────────────┐
+              ▼                                   ▼
+       ┌──────────────┐                    ┌──────────────┐
+       │    MySQL     │                    │ External APIs│
+       │   Database   │                    │              │
+       └──────────────┘                    │ Google OAuth │
+                                           │ Brevo Email  │
+                                           │ Groq AI      │
+                                           │ Cloudinary   │
+                                           └──────────────┘
+````
+
+---
+
+## Project Structure
+
+```text
+VoteX/
+│
+├── config/
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+│
+├── accounts/
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── pipeline.py
+│   ├── decorators.py
+│   ├── utils.py
+│   └── migrations/
+│
+├── voting/
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   └── ...
+│
+├── web_admin/
+│   ├── views.py
+│   └── ...
+│
+├── api/
+│   ├── views.py
+│   ├── serializers.py
+│   └── ...
+│
+├── chat/
+│   ├── views.py
+│   └── ...
+│
+├── templates/
+│   ├── accounts/
+│   ├── voting/
+│   └── ...
+│
+├── static/
+│   ├── css/
+│   └── js/
+│
+├── manage.py
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Authentication Flow
+
+### Student Signup
+
+```text
+Student enters college email
+          ↓
+College email domain validation
+          ↓
+Signup OTP generated
+          ↓
+OTP sent through Brevo
+          ↓
+Student verifies OTP
+          ↓
+Student account created
+          ↓
+Student can log in
+```
+
+### Google Login
+
+```text
+Student selects Google Login
+          ↓
+Google OAuth authentication
+          ↓
+Google email verified
+          ↓
+Existing college account matched
+          ↓
+Role-based authentication
+          ↓
+Student Dashboard
+```
+
+---
+
+## Voting Flow
+
+```text
+Student Login
+     ↓
+Student Dashboard
+     ↓
+Select Active Election
+     ↓
+Select Candidate
+     ↓
+Request Vote OTP
+     ↓
+OTP sent to registered email
+     ↓
+Enter OTP
+     ↓
+Validate OTP
+     ↓
+Cast Vote
+     ↓
+Vote recorded
+     ↓
+Confirmation Email
+```
+
+---
+
+## Security
+
+VoteX implements multiple security mechanisms:
+
+* Django password hashing
+* CSRF protection
+* Authentication-protected views
+* Role-based access control
+* College email validation
+* Email OTP verification
+* Vote OTP verification
+* Duplicate vote prevention
+* Database-level vote constraints
+* Environment variables for secrets
+* OAuth-based authentication
+* Server-side validation
+* Production HTTPS deployment
+
+Sensitive credentials such as:
+
+```text
+SECRET_KEY
+DATABASE_PASSWORD
+GOOGLE_CLIENT_SECRET
+BREVO_API_KEY
+GROQ_API_KEY
+CLOUDINARY_API_SECRET
+```
+
+are stored using environment variables and are not committed to the repository.
+
+---
+
+## REST API
+
+VoteX also provides REST API endpoints through Django REST Framework.
+
+| Method | Endpoint                | Description                         |
+| ------ | ----------------------- | ----------------------------------- |
+| GET    | `/api/elections/`       | Retrieve active elections           |
+| GET    | `/api/candidates/<id>/` | Retrieve candidates                 |
+| GET    | `/api/results/<id>/`    | Retrieve published results          |
+| GET    | `/api/my-votes/`        | Retrieve authenticated user's votes |
+
+---
+
+## Local Development
+
+### 1. Clone the Repository
 
 ```bash
-# Copy the env template
-copy .env.example .env
+git clone https://github.com/Prabu-230801133/VoteX.git
+cd VoteX
 ```
 
-Edit `.env` with your credentials:
-```
-DB_PASSWORD=your_mysql_root_password
-EMAIL_HOST_USER=your_gmail@gmail.com
-EMAIL_HOST_PASSWORD=your_gmail_app_password
-```
+### 2. Create a Virtual Environment
 
-### Step 2: Create Database & Migrate
+Windows:
 
 ```bash
-# Option A: Use the setup script
-python setup_db.py
+python -m venv venv
+venv\Scripts\activate
+```
 
-# Option B: Manual steps
-# 1. Open MySQL Workbench and run:
-#    CREATE DATABASE college_db CHARACTER SET utf8mb4;
-# 2. Run migrations:
+Linux/macOS:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure Environment Variables
+
+Create a `.env` file:
+
+```env
+SECRET_KEY=your_secret_key
+DEBUG=True
+
+DB_NAME=college_db
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_HOST=localhost
+DB_PORT=3306
+
+COLLEGE_EMAIL_DOMAIN=rajalakshmi.edu.in
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=your_google_client_id
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=your_google_client_secret
+
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SENDER_EMAIL=your_verified_sender_email
+BREVO_SENDER_NAME=VoteX
+
+GROQ_API_KEY=your_groq_api_key
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+```
+
+Never commit your `.env` file or API keys to GitHub.
+
+### 5. Create the Database
+
+Create a MySQL database:
+
+```sql
+CREATE DATABASE college_db
+CHARACTER SET utf8mb4;
+```
+
+### 6. Run Migrations
+
+```bash
 python manage.py migrate
-# 3. Load sample data:
-python seed_data.py
 ```
 
-### Step 3: Run the Server
+### 7. Create an Administrator
+
+```bash
+python manage.py createsuperuser
+```
+
+### 8. Start the Development Server
 
 ```bash
 python manage.py runserver
 ```
 
-Visit: **http://localhost:8000**
+Open:
+
+[http://localhost:8000](http://localhost:8000)
 
 ---
 
-## 👥 Default Accounts (after seeding)
+## Google OAuth Configuration
 
-| Role | URL | Username | Password |
-|------|-----|----------|----------|
-| Django Admin | /django-admin/ | admin | Admin@123 |
-| Web Admin | /admin-dashboard/ | webadmin | WebAdmin@123 |
-| Students | /accounts/login/ | student1-5 | Student@123 |
+Create OAuth credentials in Google Cloud Console.
 
----
+Add the local redirect URI:
 
-## 📁 Project Structure
-
-```
-college_election/
-├── config/                    ← Django project settings
-│   ├── settings.py
-│   └── urls.py
-├── accounts/                  ← Authentication & user management
-│   ├── models.py              ← CustomUser with role field
-│   ├── views.py               ← Login/logout/redirect
-│   ├── admin.py               ← Auto-generate & email credentials
-│   ├── decorators.py          ← Role-based access control
-│   ├── utils.py               ← Email functions
-│   └── pipeline.py            ← Google OAuth pipeline
-├── voting/                    ← Core voting functionality
-│   ├── models.py              ← Election, Position, Candidate, Vote
-│   └── views.py               ← Home, dashboard, vote casting
-├── web_admin/                 ← Custom admin dashboard
-│   └── views.py               ← Election/candidate/results CRUD
-├── api/                       ← REST API endpoints
-│   ├── views.py
-│   └── serializers.py
-├── templates/                 ← HTML templates
-├── static/                    ← CSS, JS, images
-│   ├── css/style.css          ← Global design system
-│   └── js/
-│       ├── main.js            ← Global JS
-│       └── countdown.js       ← Countdown timer component
-├── seed_data.py               ← Sample data loader
-└── setup_db.py               ← Database setup helper
+```text
+http://localhost:8000/social-auth/complete/google-oauth2/
 ```
 
----
+For production, add:
 
-## 🔌 API Integrations
+```text
+https://votex-production-4825.up.railway.app/social-auth/complete/google-oauth2/
+```
 
-1. **Google OAuth 2.0** — Social login via `social-auth-app-django`
-2. **Gmail SMTP** — Credential & vote confirmation emails
-3. **Cloudinary** — Candidate photo hosting (optional)
-
-### REST API Endpoints
-
-| Method | URL | Description |
-|--------|-----|-------------|
-| GET | /api/elections/ | List active elections |
-| GET | /api/candidates/<id>/ | Candidates for election |
-| GET | /api/results/<id>/ | Published results |
-| GET | /api/my-votes/ | Authenticated user's votes |
+Configure the Google Client ID and Client Secret through environment variables.
 
 ---
 
-## 🔒 Security Features
+## Email Configuration
 
-- ✅ One vote per student per position enforced at DB level (`unique_together`)
-- ✅ CSRF protection on all forms (Django built-in)
-- ✅ Password hashing (PBKDF2 + SHA256)
-- ✅ Role-based access control via custom decorators
-- ✅ `@login_required` on all protected views
-- ✅ Assignment-based eligibility (students only see their elections)
+VoteX uses the **Brevo Transactional Email API** instead of direct SMTP connections.
 
----
+Required environment variables:
 
-## 📧 Email Setup (Gmail)
+```env
+BREVO_API_KEY=your_api_key
+BREVO_SENDER_EMAIL=your_verified_sender_email
+BREVO_SENDER_NAME=VoteX
+```
 
-1. Enable 2FA on your Gmail account
-2. Go to: Account → Security → App passwords
-3. Generate an app password for "Mail"
-4. Add to `.env`: `EMAIL_HOST_PASSWORD=your_16_char_app_password`
+The application uses the Brevo HTTPS API to send transactional emails such as OTPs, confirmations, and election notifications.
 
 ---
 
-## 🌐 Google OAuth Setup
+## Deployment
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a project → Enable "Google+ API" / "Google Identity"
-3. Create OAuth 2.0 credentials
-4. Add redirect URI: `http://localhost:8000/social-auth/complete/google-oauth2/`
-5. Copy Client ID & Client Secret to `.env`
+VoteX is deployed on **Railway**.
+
+Production configuration includes:
+
+* Django + Gunicorn
+* MySQL database
+* WhiteNoise for static files
+* Environment-based configuration
+* Google OAuth production credentials
+* Brevo transactional email
+* Cloudinary media storage
+* Production database migrations
+* HTTPS
+
+Live application:
+
+[https://votex-production-4825.up.railway.app/](https://votex-production-4825.up.railway.app/)
 
 ---
 
-## ☁️ Cloudinary Setup (Optional)
+## What I Learned
 
-1. Sign up at [cloudinary.com](https://cloudinary.com) (free tier)
-2. Copy Cloud Name, API Key, Secret to `.env`
-3. Candidate photos will upload to Cloudinary automatically
+Building VoteX provided practical experience with:
 
-Without Cloudinary, photos are stored in `media/candidates/` locally.
+* Full-stack web application development
+* Django architecture
+* Relational database design
+* Authentication and authorization
+* Google OAuth integration
+* OTP-based verification
+* Transactional email APIs
+* REST API development
+* AI API integration
+* Cloud-based deployment
+* Environment configuration
+* Database migrations
+* Production debugging
+* Git and GitHub workflows
+
+---
+
+## Future Improvements
+
+Planned improvements include:
+
+* Enhanced election analytics
+* Improved AI assistant capabilities
+* Administrative reporting
+* Advanced audit logging
+* Improved notification management
+* Performance optimization
+* Automated testing and CI/CD
+
+---
+
+## License
+
+This project is developed for educational and portfolio purposes.
+
+```
+```
